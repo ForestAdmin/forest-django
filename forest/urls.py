@@ -8,4 +8,10 @@ urlpatterns = [
     url(r'(?i)^forest/(?P<model>[a-z]*)$', views.resources),
     url(r'(?i)^forest/(?P<model>[a-z]*)/(?P<r_id>[0-9]+)$', views.resource),
     url(r'(?i)^forest/(?P<model>[a-z]*)/(?P<r_id>[0-9]+)/(?P<association>[a-z]*)$', views.association),
+    url(r'(?i)^forest/stripe_payments$', views.stripe_payments),
+    url(r'(?i)^forest/(?P<model>[a-z]*)/(?P<r_id>[0-9]+)/stripe_payments$', views.stripe_payments),
+    url(r'(?i)^forest/stripe_payments/refunds$', views.stripe_refund),
+    url(r'(?i)^forest/stripe_invoices$', views.stripe_refund),
+    url(r'(?i)^forest/(?P<model>[a-z]*)/(?P<r_id>[0-9]+)/stripe_invoices$', views.stripe_invoices),
+    url(r'(?i)^forest/(?P<model>[a-z]*)/(?P<r_id>[0-9]+)/stripe_cards$', views.stripe_cards),
 ]

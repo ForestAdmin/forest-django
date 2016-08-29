@@ -1,12 +1,13 @@
+import os
 import requests
 from django.conf import settings
 
 def get_allowed_users(rendering_id):
-    url = 'https://forestadmin-server.herokuapp.com'
+    url = os.getenv('FOREST_URL', settings.FOREST_URL)
     #TODO: Tell forest rendering ID isn't used in request
     url += '/forest/renderings/%s/allowed-users' % rendering_id
     #TODO: key in config
-    secret_key = 'a822da157aec0b2831a95e097e0b9a7a67b282cbbc1ec4b65185deaa019c102e'
+    secret_key = os.getenv('FOREST_SECRET_KEY', settings.FOREST_SECRET_KEY)
     headers = {
         'forest-secret-key':  secret_key,
         'Content-Type': 'application/json'

@@ -17,8 +17,8 @@ class ResourceSerializer():
     def _get_attributes(self):
         attributes = []
         for schema in self.api_map['data']:
-            if schema['id'] == self.model_name:
-                attributes = schema['attributes']
+            if schema.get('id') == self.model_name:
+                attributes = schema.get('attributes')
         return attributes
 
     def _get_fields(self, attributes):
@@ -48,7 +48,7 @@ class ResourceSerializer():
     def _get_options(self, queryset):
         attributes = self._get_attributes()
         fields = [x['field'] for x in attributes['fields']]
-        options = { 'attributes': fields, 'key_for_attribute': 'snake_case' }
+        options = { 'attributes': fields, 'key_for_attribute': (lambda x: x) }
         related_fields = self._get_related_fields()
 
         for field in self._get_fields(attributes):

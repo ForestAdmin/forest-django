@@ -19,14 +19,17 @@ def get_model_class(model_name):
 def jwt_get_user_id_from_payload_handler(payload):
     return payload.get('id')
 
-#TODO: strenghten this
 def jwt_verify(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
-        token = request.META['HTTP_AUTHORIZATION'].split()[1]
+        if hasattr(request, 'META') and request.META.get('HTTP_AUTHORIZATION'):
+            splitted_token = request.META['HTTP_AUTHORIZATION'].split()
+            if len(splitted_token):
+                token = splitted_token[1]
         try:
             payload = jwt.decode(token, settings.JWT_SECRET_KEY, True)
             return view_func(request, *args, **kwargs)
         except Exception as err:
+            print err
             return HttpResponse(status=401)
 
     return _wrapped_view_func

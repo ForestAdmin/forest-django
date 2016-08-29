@@ -9,7 +9,6 @@ class SerializerUtils(object):
         self.payload = payload
         self.opts = opts
 
-
     def key_for_attribute(self, attribute):
         def transform_callback(acc, value, key):
             if self._is_complex_type(value):
@@ -33,7 +32,7 @@ class SerializerUtils(object):
 
         else:
             if _.is_function(self.opts.get('key_for_attribute')):
-                return opts[self.key_for_attribute(attribute)]
+                return self.opts['key_for_attribute'](attribute)
             else:
                 caserized = inflector.caserize(attribute, self.opts)
                 return caserized

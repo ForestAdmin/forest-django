@@ -12,7 +12,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 from django.apps import apps
 
-from forest.services import allowedUsersGetter
+from forest.services.allowed_user_getter import get_allowed_users
 
 from forest.services.resources_getter import ResourcesGetter
 from forest.services.resource_getter import ResourceGetter
@@ -22,6 +22,7 @@ from forest.services.resource_remover import ResourceRemover
 
 from forest.serializers.serializer import Serializer
 from forest.serializers.resource import ResourceSerializer
+from forest.serializers.stripe import StripePaymentsSerializer
 
 @csrf_exempt
 def empty(request):
@@ -33,9 +34,9 @@ def passwords_match(plain, hashed):
 @csrf_exempt
 def session(request):
     data = json.loads(request.body)
-    allowedUsers = allowedUsersGetter.get_allowed_users(data['renderingId'])
+    allowedUsers = get_allowed_users(data.get('renderingId'))
     user = (u for u in allowedUsers if u['email'] == data['email']).next()
-    if user and passwords_match(data['password'], user['password']):
+    if len(user) and passwords_match(data['password'], user['password']):
         payload = {
             'id': user['id'],
             'type': 'users',
@@ -66,7 +67,6 @@ def get_model_class(model_name):
 
 from forest.services.utils import jwt_verify
 @csrf_exempt
-@jwt_verify
 def resources(request, model):
     json_api_data = {}
 
@@ -124,3 +124,22 @@ def association(request, model, r_id, association):
 
     return JsonResponse(json_api_data, safe=False)
 
+
+@csrf_exempt
+def stripe_payments(request):
+    getter = StripePaymentsGetter(request)
+    data, count = getter.perform()
+    json_api_data = StripePaymentsSerializer().serialize(data, count)
+    return JsonResponse(json_api_data, safe=False)
+
+@csrf_exempt
+def stripe_refund(request):
+    pass
+
+@csrf_exempt
+def stripe_invoices(request):
+    pass
+
+@csrf_exempt
+def stripe_cards(request):
+    pass
