@@ -66,9 +66,9 @@ def getModelFields(model):
                     pk = field.rel.to._meta.pk.name
                     schema['reference'] = "%s.%s" % (ref, pk)
                 else:
-                    ref = field.to.__name__
+                    # ref = field.to.__name__
                     pk = field.to._meta.pk.name
-                    schema['reference'] = "%s.%s" % (ref, pk)
+                    schema['reference'] = "%s.%s" % (schema['field'], pk)
                 schema['inverseOf'] = model.__name__
             elif field.is_relation and field.many_to_one:
                 # schema['field'] = field.related_model.__name__

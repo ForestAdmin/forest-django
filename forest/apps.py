@@ -100,7 +100,7 @@ class ForestConfig(AppConfig):
     verbose_name = "My Forest Connector"
     def ready(self):
         apimap = api_map.generate()
-        setup_stripe_integration(apimap['data'])
+        # setup_stripe_integration(apimap['data'])
         url = os.getenv('FOREST_URL', settings.FOREST_URL)
         url += '/forest/apimaps'
         secret_key = os.getenv('FOREST_SECRET_KEY', settings.FOREST_SECRET_KEY)
