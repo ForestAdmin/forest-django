@@ -20,6 +20,7 @@ from forest.services.resource_creator import ResourceCreator
 from forest.services.resource_updater import ResourceUpdater
 from forest.services.resource_remover import ResourceRemover
 from forest.services import has_many_getter
+from forest.services import value_stat_getter
 
 from forest.serializers.serializer import Serializer
 from forest.serializers.resource import ResourceSerializer
@@ -68,6 +69,7 @@ def get_model_class(model_name):
 
 from forest.services.utils import jwt_verify
 @csrf_exempt
+@jwt_verify
 def resources(request, model):
     json_api_data = {}
 
@@ -83,22 +85,8 @@ def resources(request, model):
 
     return JsonResponse(json_api_data, safe=False)
 
-
-# class Resources(JSONWebTokenAuthMixin, View):
-    # def get(self, request, model):
-        # getter = ResourcesGetter(request, model)
-        # data = getter.perform()
-        # count = getter.count
-        # json_api_data = ResourceSerializer(model).serialize(data, count)
-        # return JsonResponse(json_api_data, safe=False)
-
-    # def post(self, request, model):
-        # creator = ResourceCreator(request, model)
-        # data = creator.perform()
-        # json_api_data = ResourceSerializer(model).serialize([data,], 1, single=True)
-        # return JsonResponse(json_api_data, safe=False)
-
 @csrf_exempt
+@jwt_verify
 def resource(request, model, r_id):
     json_api_data = {}
     if request.method == 'GET':
@@ -118,10 +106,22 @@ def resource(request, model, r_id):
     return JsonResponse(json_api_data, safe=False)
 
 @csrf_exempt
+@jwt_verify
 def association(request, model, r_id, association):
     data, count = has_many_getter.perform(request, model, r_id, association)
     json_api_data = ResourceSerializer(association).serialize(data, count)
     return JsonResponse(json_api_data, safe=False)
+
+@csrf_exempt
+def stats(request, model):
+    if request.method == 'POST':
+        payload = json.loads(request.body)
+        if payload.get('type') == 'Value':
+            data = value_stat_getter.perform(payload, model)
+            json_api_data = ResourceSerializer(association).serialize(data, count)
+
+            return JsonResponse(json_api_data, safe=False)
+    return HttpResponse(status=204)
 
 
 @csrf_exempt
