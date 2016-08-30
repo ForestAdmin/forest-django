@@ -125,6 +125,14 @@ class ApiMap():
         if len(schema):
             return schema[0]
 
+    def get_field_from_model(self, model_name, field_model):
+        schema = self.get_model_schema(model_name)
+        if schema is None:
+            return
+        for field in schema['attributes']['fields']:
+            if field.get('reference', '').split('.')[0] == field_model:
+                return field['field']
+
     def get_type(self, model_name, field_name):
         schema = self.get_model_schema(model_name)
         if schema is None:

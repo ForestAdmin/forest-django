@@ -19,6 +19,7 @@ from forest.services.resource_getter import ResourceGetter
 from forest.services.resource_creator import ResourceCreator
 from forest.services.resource_updater import ResourceUpdater
 from forest.services.resource_remover import ResourceRemover
+from forest.services import has_many_getter
 
 from forest.serializers.serializer import Serializer
 from forest.serializers.resource import ResourceSerializer
@@ -118,10 +119,8 @@ def resource(request, model, r_id):
 
 @csrf_exempt
 def association(request, model, r_id, association):
-    getter = ResourcesGetter(request, model, r_id, association=association)
-    data = getter.perform()
-    json_api_data = ResourceSerializer(model).serialize([data,], 1)
-
+    data = has_many_getter.perform(request, model, r_id, association)
+    json_api_data = ResourceSerializer(association).serialize(data, 5)
     return JsonResponse(json_api_data, safe=False)
 
 
@@ -131,6 +130,7 @@ def stripe_payments(request):
     data, count = getter.perform()
     json_api_data = StripePaymentsSerializer().serialize(data, count)
     return JsonResponse(json_api_data, safe=False)
+
 
 @csrf_exempt
 def stripe_refund(request):

@@ -9,11 +9,12 @@ from forest.services import utils
 
 
 class ResourcesGetter():
-    def __init__(self, request, model, association=None):
+    def __init__(self, request, model, r_id=None, association=None):
         self.request = request
         self.params = request.GET
         self.model = utils.get_model_class(model)
         self.count = 0
+        self.r_id = r_id
         self.association = association
 
     def _get_limit(self):
@@ -90,8 +91,6 @@ class ResourcesGetter():
             query = query.order_by(sort)
         if related_fields:
             query = query.select_related(*related_fields)
-        if self.association:
-            query = getattr(query, '%s_set' % association)()
 
         return query
 
@@ -102,5 +101,4 @@ class ResourcesGetter():
         offset = self._get_offset()
         limit = self._get_limit()
         data = self._build_query()[offset:offset+limit]
-
         return data
