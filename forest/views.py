@@ -119,8 +119,8 @@ def resource(request, model, r_id):
 
 @csrf_exempt
 def association(request, model, r_id, association):
-    data = has_many_getter.perform(request, model, r_id, association)
-    json_api_data = ResourceSerializer(association).serialize(data, 5)
+    data, count = has_many_getter.perform(request, model, r_id, association)
+    json_api_data = ResourceSerializer(association).serialize(data, count)
     return JsonResponse(json_api_data, safe=False)
 
 
