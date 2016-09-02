@@ -1,6 +1,7 @@
 import django.apps
 from django.conf import settings
 from django.db import models
+from django.apps import apps
 
 FIELDS_TYPE_MAPPING = {
     'AutoField': 'Number',
@@ -103,7 +104,7 @@ class ApiMap():
                 'liana_version': '0.0.1'
             }
         }
-        models = django.apps.apps.get_models()
+        models = apps.get_app_config(settings.FOREST_APP_MODELS).get_models()
         for model in models:
             data_item = {
                 'id': model.__name__,

@@ -56,9 +56,9 @@ def _format_data(data, params):
             year = int(item.pop('year'))
         elif time_range == 'Week':
             date = item.pop('week')
-            year = date.year
-            month = date.month
             day = date.day
+            month = date.month
+            year = date.year
 
         item['label'] = "%d-%02d-%02d" % (year, month, day)
         item['values'] = { 'value': item.pop('value') }
