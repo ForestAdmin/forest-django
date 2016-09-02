@@ -1,4 +1,3 @@
-import django.apps
 from django.conf import settings
 from django.db import models
 from django.apps import apps
@@ -41,56 +40,12 @@ FIELDS_TYPE_MAPPING = {
 }
 
 
-def getModelFields(model):
-    fields = []
-    for field in model._meta.get_fields():
-        schema = {
-            'field': field.name,
-            'type': FIELDS_TYPE_MAPPING.get(field.get_internal_type(), 'String')
-        }
-        if not field.is_relation:
-            fields.append(schema)
-        else:
-            if field.is_relation and field.one_to_many:
-                schema['field'] = field.related_model.__name__
-                schema['type'] = ['Number']
-                ref = field.to.__name__
-                pk = field.to._meta.pk.name
-                schema['reference'] = "%s.%s" % (schema['field'], pk)
-                schema['inverseOf'] = model.__name__
-            elif field.is_relation and field.many_to_many:
-                schema['field'] = field.related_model.__name__
-                schema['type'] = ['Number']
-                # The rel attr seems to depend on from which model the
-                # relationship has been defined
-                if hasattr(field, 'rel'):
-                    ref = field.rel.to.__name__
-                    pk = field.rel.to._meta.pk.name
-                    schema['reference'] = "%s.%s" % (ref, pk)
-                else:
-                    # ref = field.to.__name__
-                    pk = field.to._meta.pk.name
-                    schema['reference'] = "%s.%s" % (schema['field'], pk)
-                schema['inverseOf'] = model.__name__
-            elif field.is_relation and field.many_to_one:
-                # schema['field'] = field.related_model.__name__
-                schema['field'] = field.name
-                ref = field.rel.to.__name__
-                pk = field.rel.to._meta.pk.name
-                schema['reference'] = "%s.%s" % (ref, pk)
-                schema['inverseOf'] = model.__name__
-            fields.append(schema)
-
-    return fields
-
-
 class ApiMap():
     def __init__(self):
         self.apimap = {}
 
     def get(self):
         return self.apimap
-
 
     def get_models(self):
         for app in settings.INSTALLED_APPS:
@@ -113,7 +68,7 @@ class ApiMap():
                 'links': {}
             }
             data_item['attributes']['name'] = model.__name__
-            data_item['attributes']['fields'] = getModelFields(model)
+            data_item['attributes']['fields'] = self.get_model_fields(model)
             data_item['attributes']['only-for-relationship'] = None
             data_item['attributes']['is-virtual'] = None
             data_item['attributes']['is-read-only'] = False
@@ -126,6 +81,32 @@ class ApiMap():
             self.apimap['data'].append(data_item)
 
         return self.apimap
+
+    def get_model_fields(self, model):
+        fields = []
+        for field in model._meta.get_fields():
+            internal_type = field.get_internal_type()
+            schema = {
+                'field': field.name,
+                'type': FIELDS_TYPE_MAPPING.get(internal_type, 'String')
+            }
+            if not field.is_relation:
+                fields.append(schema)
+            else:
+                ref = field.related_model.__name__
+                pk = field.related_model._meta.pk.name
+
+                if field.one_to_many or field.many_to_many:
+                    schema['field'] = ref
+                    schema['type'] = ['Number']
+
+                elif field.many_to_one:
+                    ref = field.related_model.__name__
+
+                schema['reference'] = "%s.%s" % (ref, pk)
+                fields.append(schema)
+
+        return fields
 
     def get_model_schema(self, model_name):
         schema = filter(lambda x: x['id'] == model_name, self.apimap['data'])

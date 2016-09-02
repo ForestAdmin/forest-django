@@ -19,17 +19,24 @@ In settings.py
         ...
     ]
 
+  FOREST_APP_MODELS = <app_name>
+  FOREST_SECRET_KEY = <forest_secret_key>
+  FOREST_URL = 'https://forestadmin-server.herokuapp.com'
+
 In your urls router (urls.py)
 
     url(r'^forest/', include('forest.urls')),
+
+
 
 
 ## Development
 
 For local development, use:
 
-`export PYTHONPATH=$PYTHONPATH:/path/to/forest-django/`
+`python setup.py develop`
 
 ## Build
 
 `python setup.py sdist`
+

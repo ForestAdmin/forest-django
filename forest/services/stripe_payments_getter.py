@@ -29,7 +29,6 @@ class StripePaymentsGetter():
             return 0
 
     def perform(self):
-        import pdb; pdb.set_trace()
         customer = self.model.objects.get(pk=self.r_id)
         query = {
             'limit': self.get_limit(),

@@ -32,6 +32,7 @@ def jwt_verify(view_func):
         try:
             payload = jwt.decode(token, settings.JWT_SECRET_KEY, True)
             return view_func(request, *args, **kwargs)
+        #TODO: don't catch everything here
         except Exception as err:
             print err
             return HttpResponse(status=401)
