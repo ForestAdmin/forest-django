@@ -21,10 +21,13 @@ from forest.services.resource_updater import ResourceUpdater
 from forest.services.resource_remover import ResourceRemover
 from forest.services import has_many_getter
 from forest.services import value_stat_getter
+from forest.services import pie_stat_getter
+from forest.services import line_stat_getter
 
 from forest.serializers.serializer import Serializer
 from forest.serializers.resource import ResourceSerializer
 from forest.serializers.stripe import StripePaymentsSerializer
+from forest.serializers.stat import StatSerializer
 
 @csrf_exempt
 def empty(request):
@@ -118,11 +121,18 @@ def stats(request, model):
         payload = json.loads(request.body)
         if payload.get('type') == 'Value':
             data = value_stat_getter.perform(payload, model)
-            json_api_data = ResourceSerializer(association).serialize(data, count)
-
+            json_api_data = StatSerializer().serialize(data)
             return JsonResponse(json_api_data, safe=False)
-    return HttpResponse(status=204)
+        elif payload.get('type') == 'Pie':
+            data = pie_stat_getter.perform(payload, model)
+            json_api_data = StatSerializer().serialize(data)
+            return JsonResponse(json_api_data, safe=False)
+        elif payload.get('type') == 'Line':
+            data = line_stat_getter.perform(payload, model)
+            json_api_data = StatSerializer().serialize(data)
+            return JsonResponse(json_api_data, safe=False)
 
+    return HttpResponse(status=204)
 
 @csrf_exempt
 def stripe_payments(request):

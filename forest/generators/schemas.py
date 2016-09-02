@@ -1,4 +1,5 @@
 import django.apps
+from django.conf import settings
 from django.db import models
 
 FIELDS_TYPE_MAPPING = {
@@ -88,6 +89,11 @@ class ApiMap():
 
     def get(self):
         return self.apimap
+
+
+    def get_models(self):
+        for app in settings.INSTALLED_APPS:
+            pass
 
     def generate(self):
         self.apimap = {
