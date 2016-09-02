@@ -4,21 +4,6 @@ from django.db import models
 from forest.services import filter_generator
 from forest.services import utils
 
-# WEEK_FUNC = 'STRFTIME("%%%%W", %s)' # use 'WEEK(%s)' for mysql
-
-# class WeekCountAggregate(models.sql.aggregates.Aggregate):
-    # is_ordinal = True
-    # sql_function = 'WEEK' # unused
-    # sql_template = "COUNT(%s)" % (WEEK_FUNC.replace('%%', '%%%%') % '%(field)s')
-
-# class WeekCount(models.aggregates.Aggregate):
-    # name = 'Week'
-    # def add_to_query(self, query, alias, col, source, is_summary):
-        # query.aggregates[alias] = WeekCountAggregate(col, source=source,
-            # is_summary=is_summary, **self.extra)
-
-#list(Rentals.objects.all().extra(select={'month': "extract(month from created_at)", 'year': "extract(year from created_at)"}).values('month', 'year').annotate(count=Count('created_at')))
-#Product.objects.extra(select={'day': 'date( date_created )'}).values('day').annotate(available=Count('date_created'))
 
 def _get_filters(params):
     filters = []
@@ -28,20 +13,30 @@ def _get_filters(params):
     all_filters = utils.merge_dicts(*filters)
     return all_filters
 
+
 def _get_custom_select(params):
     select = {}
     group_by_date_field = params.get('group_by_date_field')
-    if params.get('time_range') == 'Day':
+    time_range = params.get('time_range')
+    if time_range == 'Day':
         select['day'] = 'date(%s)' % group_by_date_field
-    elif params.get('time_range') == 'Month':
-        select['month'] = 'extract(month FROM %s)' % group_by_date_field
-        select['year'] = 'extract(year FROM %s)' % group_by_date_field
-    elif params.get('time_range') == 'Year':
-        select['year'] = 'extract(year FROM %s)' % group_by_date_field
+    elif time_range == 'Month':
+        select['month'] = "extract(month FROM %s)" % group_by_date_field
+        select['year'] = "extract(year FROM %s)" % group_by_date_field
+    elif time_range == 'Year':
+        select['year'] = "extract(year FROM %s)" % group_by_date_field
+    elif time_range == 'Week':
+        select['week'] = "date_trunc('week', %s)" % group_by_date_field
+
     return select
 
+
 def _get_aggregate(params):
-    return getattr(models, params.get('aggregate', 'Count'))
+    aggregate = params.get('aggregate')
+    if aggregate == 'Week':
+        aggregate = 'WeekCount'
+    return getattr(models, aggregate)
+
 
 def _format_data(data, params):
     time_range = params.get('time_range')
@@ -59,6 +54,11 @@ def _format_data(data, params):
             year = int(item.pop('year'))
         elif time_range == 'Year':
             year = int(item.pop('year'))
+        elif time_range == 'Week':
+            date = item.pop('week')
+            year = date.year
+            month = date.month
+            day = date.day
 
         item['label'] = "%d-%02d-%02d" % (year, month, day)
         item['values'] = { 'value': item.pop('value') }
@@ -66,17 +66,22 @@ def _format_data(data, params):
     _sort_data_by_date(data)
     _fill_empty_date(data, params)
 
+
 def _sort_data_by_date(data):
     data.sort(key=lambda item:item['label'])
+
 
 def _label_to_datetime(label):
     return datetime.strptime(label, '%Y-%m-%d')
 
+
 def _datetime_to_label(date):
     return date.strftime('%Y-%m-%d')
 
+
 def _find_by_label(data, label):
     return any(item['label'] == label for item in data)
+
 
 def _fill_empty_date(data, params):
     time_range = params.get('time_range')
@@ -91,6 +96,7 @@ def _fill_empty_date(data, params):
             data.append({ 'label': label, 'values': { 'value': 0 } })
 
     _sort_data_by_date(data)
+
 
 def perform(params, model_name):
     model = utils.get_model_class(model_name)
