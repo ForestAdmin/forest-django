@@ -187,8 +187,8 @@ class SerializerUtils(object):
         attributes = []
 
         if opts and opts.get('attributes'):
-            embeds = filter(lambda x: opts[x], opts['attributes'])
-            attributes = filter(lambda x: opts[x] is None, opts['attributes'])
+            embeds = filter(lambda x: opts.get(x), opts['attributes'])
+            attributes = filter(lambda x: opts.get(x) is None, opts['attributes'])
         else:
             attributes = _.keys(dest)
 

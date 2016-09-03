@@ -1,6 +1,9 @@
+import importlib
+import pkgutil
 from django.conf import settings
 from django.db import models
 from django.apps import apps
+from forest.serializers.serializer import Serializer as JSONApiSerializer
 
 FIELDS_TYPE_MAPPING = {
     'AutoField': 'Number',
@@ -43,6 +46,10 @@ FIELDS_TYPE_MAPPING = {
 class ApiMap():
     def __init__(self):
         self.apimap = {}
+        self.actions = []
+        self.init_actions()
+        self.smart_collections = []
+        self.init_smart_collections()
 
     def get(self):
         return self.apimap
@@ -52,35 +59,79 @@ class ApiMap():
             pass
 
     def generate(self):
-        self.apimap = {
-            'data': [],
+        data = []
+        models = apps.get_app_config(settings.FOREST_APP_NAME).get_models()
+        for model in models:
+            data.append(self.get_schema(model))
+
+        data += self.smart_collections
+        self.apimap = self.serialize(data)
+        return self.apimap
+
+    def init_actions(self):
+        """Imports actions from FOREST_APP_NAME/forest/actions folder. This
+        does not import recursively.
+        """
+        mod_path = "%s.forest.actions" % settings.FOREST_APP_NAME
+        actions_module = importlib.import_module(mod_path)
+        for loader, name, ispkg in pkgutil.iter_modules(actions_module.__path__):
+            action_module = loader.find_module(name).load_module(name)
+            if hasattr(action_module, 'ACTION'):
+                self.actions.append(action_module.ACTION)
+
+    def init_smart_collections(self):
+        """Imports actions from FOREST_APP_NAME/forest/smart_collections
+        folder. This does not import recursively.
+        """
+        mod_path = "%s.forest.smart_collections" % settings.FOREST_APP_NAME
+        sc_module = importlib.import_module(mod_path)
+        for loader, name, ispkg in pkgutil.iter_modules(sc_module.__path__):
+            sc_module = loader.find_module(name).load_module(name)
+            if hasattr(sc_module, 'SMART_COLLECTION'):
+                self.smart_collections.append(sc_module.SMART_COLLECTION)
+
+    def get_actions(self, model_name):
+        actions = []
+        for action in self.actions:
+            if action.get('collection') == model_name:
+                actions.append(action)
+        return actions
+
+    def get_schema(self, model):
+        schema = {
+            'name': model.__name__,
+            'fields': self.get_model_fields(model),
+            'only-for-relationship': None,
+            'is-virtual': None,
+            'is-read-only': False,
+            'is-searchable': True,
+            'actions': self.get_actions(model.__name__)
+        }
+        return schema
+
+    def serialize(self, apimap):
+        options = {
+            'id': 'name',
+            'attributes': ['name', 'displayName', 'paginationType', 'icon',
+                           'fields', 'actions', 'onlyForRelationships',
+                           'isVirtual', 'isReadOnly'],
+            'fields': {
+                'attributes': ['field', 'displayName', 'type', 'enums',
+                               'collection_name', 'reference', 'column',
+                               'isSearchable', 'widget', 'integration']
+            },
+            'actions': {
+                'ref': 'name',
+                'attributes': ['name', 'endpoint', 'httpMethod', 'fields']
+            },
             'meta': {
                 'liana': 'forest-django',
                 'liana_version': '0.0.1'
             }
         }
-        models = apps.get_app_config(settings.FOREST_APP_MODELS).get_models()
-        for model in models:
-            data_item = {
-                'id': model.__name__,
-                'type': 'collections',
-                'attributes': {},
-                'links': {}
-            }
-            data_item['attributes']['name'] = model.__name__
-            data_item['attributes']['fields'] = self.get_model_fields(model)
-            data_item['attributes']['only-for-relationship'] = None
-            data_item['attributes']['is-virtual'] = None
-            data_item['attributes']['is-read-only'] = False
-            data_item['attributes']['is-searchable'] = True
-
-            data_item['links'] = {
-                'self': '/collections/%s' % model.__name__
-            }
-
-            self.apimap['data'].append(data_item)
-
-        return self.apimap
+        ser = JSONApiSerializer('collections', options)
+        ser_apimap = ser.serialize(apimap)
+        return ser_apimap
 
     def get_model_fields(self, model):
         fields = []
