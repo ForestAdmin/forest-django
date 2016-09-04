@@ -73,22 +73,28 @@ class ApiMap():
         does not import recursively.
         """
         mod_path = "%s.forest.actions" % settings.FOREST_APP_NAME
-        actions_module = importlib.import_module(mod_path)
-        for loader, name, ispkg in pkgutil.iter_modules(actions_module.__path__):
-            action_module = loader.find_module(name).load_module(name)
-            if hasattr(action_module, 'ACTION'):
-                self.actions.append(action_module.ACTION)
+        try:
+            actions_module = importlib.import_module(mod_path)
+            for loader, name, ispkg in pkgutil.iter_modules(actions_module.__path__):
+                action_module = loader.find_module(name).load_module(name)
+                if hasattr(action_module, 'ACTION'):
+                    self.actions.append(action_module.ACTION)
+        except ImportError as err:
+            pass
 
     def init_smart_collections(self):
         """Imports actions from FOREST_APP_NAME/forest/smart_collections
         folder. This does not import recursively.
         """
         mod_path = "%s.forest.smart_collections" % settings.FOREST_APP_NAME
-        sc_module = importlib.import_module(mod_path)
-        for loader, name, ispkg in pkgutil.iter_modules(sc_module.__path__):
-            sc_module = loader.find_module(name).load_module(name)
-            if hasattr(sc_module, 'SMART_COLLECTION'):
-                self.smart_collections.append(sc_module.SMART_COLLECTION)
+        try:
+            sc_module = importlib.import_module(mod_path)
+            for loader, name, ispkg in pkgutil.iter_modules(sc_module.__path__):
+                sc_module = loader.find_module(name).load_module(name)
+                if hasattr(sc_module, 'SMART_COLLECTION'):
+                    self.smart_collections.append(sc_module.SMART_COLLECTION)
+        except ImportError as err:
+            pass
 
     def get_actions(self, model_name):
         actions = []
