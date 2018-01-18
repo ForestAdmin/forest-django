@@ -1,3 +1,5 @@
+WARNING: This repo is deprecated. Use https://github.com/ForestAdmin/lumber instead.
+
 ## Install
 
 In settings.py
